@@ -92,20 +92,20 @@ async function main() {
     return;
   }
   utils.printInfo(`清洗后关键词: ${keyword}`);
-  [sort, duration, 0, limit] = validator.optionFormat(
-    sort,
-    duration,
-    0,
-    limit,
-  );
+  [sort, duration, _, limit] = validator.optionFormat(sort, duration, 0, limit);
   utils.printInfo(`排序: ${sort}, 时长: ${duration}, 数量: ${limit}`);
 
   const tokenValue = token.skillToken(process.env.GUAIKEI_API_TOKEN);
   if (tokenValue === "") return;
   let searchTask = null;
-  return;
   try {
-    const status = await search.createSearchTask(tokenValue, keyword, sort, duration, limit);
+    const status = await search.createSearchTask(
+      tokenValue,
+      keyword,
+      sort,
+      duration,
+      limit,
+    );
     if (!status || status.errcode !== 0) {
       throw new Error(
         `视频搜索任务创建失败时, 遇到未知错误, 请反馈给开发者 ${status} - ${Date.now()}`,
@@ -113,7 +113,13 @@ async function main() {
     }
     utils.printSuccess(`视频搜索任务创建成功, 正在搜索中...`);
 
-    searchTask = await search.getSearchTask(tokenValue, keyword, sort, duration, limit);
+    searchTask = await search.getSearchTask(
+      tokenValue,
+      keyword,
+      sort,
+      duration,
+      limit,
+    );
   } catch (error) {
     utils.printError(`视频搜索任务失败: ${error.message}`);
     const errorOutput = {
