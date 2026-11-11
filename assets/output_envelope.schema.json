@@ -20,7 +20,7 @@
         },
         "error_code": {
             "type": "string",
-            "description": "OK、NO_MATCH、INVALID_KEYWORD、INVALID_ARGS、AUTH_REQUIRED、AUTH_ERROR、PLAN_LIMIT、INSUFFICIENT_BALANCE、RATE_LIMITED、DAILY_LIMIT、TIMEOUT、NETWORK_ERROR、HTTP_5xx、API_ERROR、API_SCHEMA_CHANGED、UNKNOWN，或接口返回的业务码字符串"
+            "description": "OK、NO_MATCH、INVALID_KEYWORD、INVALID_ARGS、AUTH_REQUIRED、AUTH_ERROR、PLAN_LIMIT、INSUFFICIENT_BALANCE、RATE_LIMITED、DAILY_LIMIT、TIMEOUT、NETWORK_ERROR、HTTP_5xx、API_ERROR、API_SCHEMA_CHANGED、UNKNOWN，或接口返回的业务码字符串。按 errmsg 判别：14 包月条数；15 余额；2 短时限流；18 日消费上限（CheckDayMoney）"
         },
         "message": {
             "type": "string",

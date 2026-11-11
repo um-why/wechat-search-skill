@@ -1,17 +1,38 @@
 /**
- * stdout 信封。错误和空结果刷出后再退出；成功只打印，方便随后写日志。
+ * stdout 信封。成功/错误/空结果均 write + drain 后再结束。
+ * 成功路径：先落盘（可选）→ 刷 stdout → stderr 提示 → exit(0)。
  */
 const constants = require("../config/constants");
+const log = require("./log");
+const utils = require("./utils");
 const { formatBeijingTime } = require("./time");
 
 /**
- * 把 JSON 写到 stdout，刷出后再按退出码结束。
+ * @param {object} payload
+ * @returns {Promise<void>}
+ */
+function writeJson(payload) {
+  const text = JSON.stringify(payload, null, 2) + "\n";
+  return new Promise((resolve) => {
+    process.stdout.write(text, (err) => {
+      if (err && err.code !== "EPIPE") {
+        try {
+          process.stderr.write(`stdout 写入失败: ${err.message}\n`);
+        } catch (_) {
+          /* ignore */
+        }
+      }
+      resolve();
+    });
+  });
+}
+
+/**
  * @param {object} payload
  * @param {number} exitCode
  */
 function writeJsonAndExit(payload, exitCode) {
-  const text = JSON.stringify(payload, null, 2) + "\n";
-  process.stdout.write(text, () => {
+  writeJson(payload).then(() => {
     process.exit(exitCode);
   });
 }
@@ -44,6 +65,37 @@ function buildEnvelope({
   };
 }
 
+function buildSuccessEnvelope(message, startTime, request, results, total) {
+  return buildEnvelope({
+    status: "success",
+    errorCode: "OK",
+    message,
+    request,
+    startTime,
+    results,
+    total,
+  });
+}
+
+/**
+ * @param {object} payload
+ * @param {{ logFilename?: string, stderrMessage?: string }} [opts]
+ */
+async function finishSuccess(payload, opts = {}) {
+  const { logFilename, stderrMessage } = opts;
+  if (logFilename) {
+    await log.writeResultLog(
+      logFilename,
+      JSON.stringify(payload, null, 2),
+    );
+  }
+  await writeJson(payload);
+  if (stderrMessage) {
+    utils.printSuccess(stderrMessage);
+  }
+  process.exit(0);
+}
+
 function emitError(command, code, message, exitCode, startTime, request) {
   writeJsonAndExit(
     buildEnvelope({
@@ -70,20 +122,6 @@ function emitEmpty(message, startTime, request) {
   );
 }
 
-function printSuccessEnvelope(message, startTime, request, results, total) {
-  const payload = buildEnvelope({
-    status: "success",
-    errorCode: "OK",
-    message,
-    request,
-    startTime,
-    results,
-    total,
-  });
-  console.log(JSON.stringify(payload, null, 2));
-  return payload;
-}
-
 function emitUncaught(command, error) {
   writeJsonAndExit(
     buildEnvelope({
@@ -97,9 +135,11 @@ function emitUncaught(command, error) {
 }
 
 module.exports = {
+  writeJson,
   writeJsonAndExit,
+  buildSuccessEnvelope,
+  finishSuccess,
   emitError,
   emitEmpty,
-  printSuccessEnvelope,
   emitUncaught,
 };

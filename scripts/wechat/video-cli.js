@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 const search = require("../api/video");
-const log = require("../utils/log");
 const token = require("../utils/token");
 const utils = require("../utils/utils");
 const validator = require("../validate/keyword");
@@ -9,7 +8,8 @@ const { parseArgs, buildHelp, parseDecimalInteger } = require("../utils/args");
 const {
   emitError,
   emitEmpty,
-  printSuccessEnvelope,
+  buildSuccessEnvelope,
+  finishSuccess,
   emitUncaught,
 } = require("../utils/output");
 
@@ -211,21 +211,17 @@ async function main() {
     return;
   }
 
-  const finalOutput = printSuccessEnvelope(
+  const finalOutput = buildSuccessEnvelope(
     "视频搜索任务完成",
     startTime,
     searchRequest,
     searchTask,
     searchTask.length,
   );
-  utils.printSuccess(
-    `视频搜索任务完成, 共返回 ${finalOutput.results.length} 条结果`,
-  );
-
-  await log.writeResultLog(
-    `${startTime}_${keyword}_${sort}_${duration}_video.json`,
-    JSON.stringify(finalOutput, null, 2),
-  );
+  await finishSuccess(finalOutput, {
+    logFilename: `${startTime}_${keyword}_${sort}_${duration}_video.json`,
+    stderrMessage: `视频搜索任务完成, 共返回 ${finalOutput.results.length} 条结果`,
+  });
 }
 
 main().catch((error) => {

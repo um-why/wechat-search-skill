@@ -1,8 +1,8 @@
 ---
 name: wechat-search
 description: 微信搜一搜公开数据只读：按关键词搜微信文章、微信视频。触发：微信搜索、搜一搜、公众号文章、视频号、微信热门、微信最新、wechat search、wechat article、wechat video。抖音、小红书、快手、B站、微博不要用本技能。不支持图片搜索、正文抓取、账号登录。
+version: 1.1.1
 license: MIT
-version: "1.1.0"
 metadata:
   openclaw:
     emoji: "🔍"
@@ -133,7 +133,7 @@ metadata:
   "message": "人类可读说明",
   "timestamp": "2026/11/7 17:00:00",
   "request": { "command": "article", "keyword": "AI", "sort": 0, "limit": 10 },
-  "metadata": { "skill_version": "1.1.0", "runtime_version": "22.x", "execution_time": 1234, "total": 10 },
+  "metadata": { "skill_version": "1.1.1", "runtime_version": "22.x", "execution_time": 1234, "total": 10 },
   "results": []
 }
 ```
@@ -148,7 +148,9 @@ metadata:
 | ---------- | ------ | ---------------- |
 | `AUTH_REQUIRED` / `AUTH_ERROR` | 3 | **禁止重试**。引导到 https://www.guaikei.com 开通并配置 `GUAIKEI_API_TOKEN` |
 | `PLAN_LIMIT` | 1 | **禁止同参重试**。建议降低 `--limit`（包月 ≤20）或升级按量；**须用户同意后再跑** |
-| `INSUFFICIENT_BALANCE` / `RATE_LIMITED` / `DAILY_LIMIT` | 1 | **禁止盲目重试**。转述 `message`，引导充值或稍后再试 |
+| `INSUFFICIENT_BALANCE` | 1 | 余额不足（后端 15）。**禁止同参重试**。引导官网充值 |
+| `RATE_LIMITED` | 1 | 短时间提交过多（后端 2）。**禁止立即重试** |
+| `DAILY_LIMIT` | 1 | 今日消费已达每日上限（后端 `CheckDayMoney` **18**）。**禁止同参重试**。明日再试或到官网调整限额 |
 | `INVALID_KEYWORD` | 1 | 请用户换词；**禁止自动改词重试** |
 | `INVALID_ARGS` | 2 | 按 `--help` 修正后重试**一次**；**禁止改成默认值后自动再跑** |
 | `NO_MATCH`（status=empty） | 0 | 如实告知无结果；可建议放宽条件，**经用户同意后**再试 |

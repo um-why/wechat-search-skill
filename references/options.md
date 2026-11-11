@@ -51,5 +51,6 @@ node scripts/wechat/video-cli.js --keyword AI --sort 2 --duration 2
 ```
 
 > **套餐双上限**：技能硬上限 10000（按量）。包月 Token 超限返回 `PLAN_LIMIT`：文章/视频搜索最多 **20** 条。
+> **计费错误码**：余额不足 → `INSUFFICIENT_BALANCE`（15）；短时过频 → `RATE_LIMITED`（2）；日消费上限 → `DAILY_LIMIT`（后端 `CheckDayMoney` **18**）。均禁止盲目重试。
 
 > **数量约定**：未指定 `--limit` 时只返回 10 条。用户未要求更多时不要加大。创建后约 9 分钟内同参可复用任务；结果约 15 分钟内可查询。
