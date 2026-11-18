@@ -4,6 +4,7 @@
 const constants = require("../config/constants");
 const { SkillError } = require("../utils/errors");
 const { requestApi, pollTaskResult } = require("../utils/request");
+const { pickCost } = require("../utils/cost");
 const { formatUnixSeconds } = require("../utils/time");
 
 /**
@@ -70,11 +71,12 @@ async function getSearchTask(token, keyword, sort, duration, limit) {
     "查询任务",
   );
 
+  const cost = pickCost(response);
   if (response.data) {
-    return processVideoResults(response.data);
+    return { results: processVideoResults(response.data), cost };
   }
 
-  return [];
+  return { results: [], cost };
 }
 
 module.exports = {

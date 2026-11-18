@@ -1,7 +1,7 @@
 ---
 name: wechat-search
 description: 微信搜一搜公开数据只读：按关键词搜微信文章、微信视频。触发：微信搜索、搜一搜、公众号文章、视频号、微信热门、微信最新、wechat search、wechat article、wechat video。抖音、小红书、快手、B站、微博不要用本技能。不支持图片搜索、正文抓取、账号登录。
-version: 1.1.1
+version: 1.1.2
 license: MIT
 metadata:
   openclaw:
@@ -80,10 +80,11 @@ metadata:
 
 ## 1. ⚠️ 执行前置清单（每次执行前必须过一遍）
 
-1. **先 `cd` 到本 SKILL.md 所在目录**，再执行下面的 `node scripts/wechat/*.js` 命令。
+1. **先 `cd` 到本 SKILL.md 所在目录**，再执行下面的 `node scripts/wechat/*.js` 命令（或用绝对路径，见 [references/faq.md](references/faq.md)）。
 2. **确认环境变量 `GUAIKEI_API_TOKEN` 已配置且有效**。未配置 → 不执行命令，直接走 §7 的 `AUTH_REQUIRED` 话术，禁止先跑一遍"试试看"。**禁止把 TOKEN 写进命令行参数。**
 3. **一次只跑一条命令，跑完等它自己结束**。查询最多 20 次，间隔从 2 秒起倍增，单次最长 60 秒；算上单次请求 20 秒超时，`--limit` 很大时可能较长。**进程未退出前不要判定失败，不要并发或重复发起同一条命令。**
 4. **必填参数不齐就先追问**，禁止猜测关键词。
+5. **Windows 拼参：cmd 只用双引号**包含空格/中文的参数；不要用 bash 单引号。引号仍拆坏 → 改用 `--json-args`（[faq.md](references/faq.md)）。Windows / 弱模型优先 `--json-args`。
 
 ## 2. 🎯 识别卡（选命令，命中即停）
 
@@ -96,7 +97,20 @@ metadata:
 
 ## 3. 🛠️ 命令与参数
 
-> 完整取值见 `references/options.md`（**仅在需要确认枚举含义时才读**）。
+> 完整取值见 `references/options.md`（**仅在需要确认枚举含义时才读**）。  
+> **Windows**：cmd **只用双引号**；PowerShell 含空格也优先双引号。仍拆坏或弱模型 → `--json-args`。双壳例与绝对路径 → [references/faq.md](references/faq.md)。
+
+**Windows 双壳（同一条文章搜索，先 cd 到技能目录）**：
+
+```bat
+REM cmd —— 不要用单引号
+node scripts\wechat\article-cli.js --keyword "AI 教程" --sort 1 --limit 10
+```
+
+```powershell
+# PowerShell
+node scripts/wechat/article-cli.js --keyword "AI 教程" --sort 1 --limit 10
+```
 
 ### 3.1 文章搜索 `article-cli.js`
 
@@ -125,6 +139,7 @@ metadata:
 - **stdout**：仅一块合法 JSON 信封（见 `assets/output_envelope.schema.json`）
 - **stderr**：人类可读日志（Banner / INFO），不要转述给用户
 - 成功时 `results` 为数组；`empty` / `error` 时 `results` 为 `null`
+- 可选顶层 `cost`：取数成功/empty 时可能出现（花费估算：包月为 `1`，按次为条数×单价）；错误响应无此字段
 
 ```json
 {
@@ -133,14 +148,15 @@ metadata:
   "message": "人类可读说明",
   "timestamp": "2026/11/7 17:00:00",
   "request": { "command": "article", "keyword": "AI", "sort": 0, "limit": 10 },
-  "metadata": { "skill_version": "1.1.1", "runtime_version": "22.x", "execution_time": 1234, "total": 10 },
-  "results": []
+  "metadata": { "skill_version": "1.1.2", "runtime_version": "22.x", "execution_time": 1234, "total": 10 },
+  "results": [],
+  "cost": 0.08
 }
 ```
 
 **向用户汇报时只摘关键字段**（文章：标题/作者/时间/`url`；视频：标题/作者/时长/点赞/时间）。不要把整份 JSON 原样粘贴。视频结果当前通常**没有可打开 url**，有 `docid`/`exportid` 时如实说明。
 
-结果自动落盘到技能目录 `logs/`，便于复盘。
+默认不落盘。需要留底时加 `--save` 或设 `GUAIKEI_ENABLE_LOG=1`，写入系统临时目录 `wechat-guaikei/logs/`（见 [faq.md](references/faq.md)）。
 
 ## 5. 🚨 退出码与错误码 → Agent 应对
 
@@ -177,5 +193,7 @@ metadata:
 - 环境：Node.js 16.14.0+；必需环境变量 `GUAIKEI_API_TOKEN`（16–256 位字母、数字、下划线或连字符）。
 - 配置：Windows cmd `set GUAIKEI_API_TOKEN=你的TOKEN`；PowerShell `$env:GUAIKEI_API_TOKEN="你的TOKEN"`；Linux/macOS `export GUAIKEI_API_TOKEN=你的TOKEN`。
 - 可选：`GUAIKEI_API_HOST` 覆盖 API 域名（默认 `www.guaikei.com`）。
+- Windows 引号 / 绝对路径 / FAQ：[references/faq.md](references/faq.md)。
+- 更新日志：[references/changelog.md](references/changelog.md)。
 - 合规：仅处理微信公开搜索数据；调用会把关键词发送至第三方 API（www.guaikei.com）；数据仅限个人/团队内部分析，禁止违规分发。
 - 支持：https://www.guaikei.com
